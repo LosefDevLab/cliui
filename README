@@ -1,0 +1,32 @@
+Command Line User Interface(CLIUI)
+同时由:XYLCS/XIT LOSEFDEVLAB联合开发
+Dev team:
+    LosefDevLab::Losef(Live Share开发)
+    XYLCS/XIT::Lixyv(本地Git开发)
+    XYLCS/XIT::114514pig.zip(测试)
+    XYLCS/XIT::飞舞的废物(Live Share开发)
+这是一个基于命令行的Linux用户界面,使得命令行的使用不再那么枯燥难懂.
+并且快速明了,资源占用低.
+适用于任何Linux服务器.
+
+不像其他的桌面环境,CLIUI完全抛弃了图形,迎接了CLI,这是他的资源占用低流畅运行的原因
+你只需要动动键盘即可快速的操作,我们还提供了API对各种快捷操作的开发提供了支持(未来应该有)
+
+
+如何安装和编译?
+    执行如下操作:
+        --------------------------------------------------
+        git clone https://github.com/LosefDevLab/cliui.git
+        sudo chmod 777 cliui/build.sh
+        cd cliui
+        ./build.sh
+        ./cliui
+        --------------------------------------------------
+
+
+
+
+
+
+
+开发不易求赞助qwq:WEChat xylcsstudio
