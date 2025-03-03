@@ -1,7 +1,4 @@
 # CLIUI - 基于命令行和简单的ASCII字符堆叠的Linux用户界面
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 CREATE BY<br>
 XYLCS/XIT & LOSEFDEVLAB
 ## 项目简介
