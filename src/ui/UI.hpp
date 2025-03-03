@@ -7,6 +7,8 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
+#include <cmath>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -22,6 +24,18 @@ private:
     string currentPath = "/";        // 当前所在路径
     string errorMessage = "";        // 错误提示信息
     bool terminalMode = false;       // 是否处于终端模式
+    int currentPage = 0;             // 当前页码
+    int pageSize = 10;               // 每页显示的文件数量
+
+    // 截断文件名并添加省略号
+    string truncateFileName(const string& name)
+    {
+        if (name.length() > 15)
+        {
+            return name.substr(0, 15) + "...";
+        }
+        return name;
+    }
 
 public:
     // 加载当前路径下的文件和文件夹
@@ -42,7 +56,6 @@ public:
             errorMessage = "Error: You do not have permission to access this folder.";
             this->showErrorForSeconds(3);
 
-            
             string parentPath = fs::path(currentPath).parent_path().string();
             if (!parentPath.empty())
             {
@@ -56,12 +69,15 @@ public:
     {
         system("clear");
 
-
         cout << "Current Path: " << currentPath << endl;
         cout << "----------------------------------------" << endl;
 
+        // 计算当前页的起始和结束索引
+        int start = currentPage * pageSize;
+        int end = min(start + pageSize, static_cast<int>(fileList.size()));
+
         // 显示文件列表
-        for (size_t i = 0; i < fileList.size(); ++i)
+        for (int i = start; i < end; ++i)
         {
             if (i == currentIndex)
             {
@@ -81,7 +97,7 @@ public:
                 cout << fileIcon << " ";
             }
 
-            cout << fileList[i].first << endl;
+            cout << truncateFileName(fileList[i].first) << endl;
         }
         cout << "----------------------------------------" << endl;
         cout << "  ENTER - Enter folder" << endl;
@@ -89,6 +105,10 @@ public:
         cout << "  UP/DOWN - Navigate" << endl;
         cout << "  d     - Delete selected file/folder" << endl;
         cout << "  s after enter- Open terminal" << endl;
+        cout << "  PageUp - Previous page" << endl;
+        cout << "  PageDn - Next page" << endl;
+        cout << "  Home - First page" << endl;
+        cout << "  End - Last page" << endl;
 
         // 显示错误信息（如果有）
         if (!errorMessage.empty())
@@ -130,12 +150,12 @@ public:
             char ch = getch();
             if (terminalMode)
             {
-                    cout << "\nTerminal Mode (Input exit to exit):" << endl;
-                    chdir(currentPath.c_str());
-                    system("$SHELL");
-                    terminalMode = false;
-                    render();
-                    continue;
+                cout << "\nTerminal Mode (Input exit to exit):" << endl;
+                chdir(currentPath.c_str());
+                system("$SHELL");
+                terminalMode = false;
+                render();
+                continue;
             }
 
             if (ch == '\033')
@@ -157,6 +177,26 @@ public:
                     {
                         loadFiles(parentPath);
                     }
+                }
+                else if (arrow == '5') // PageUp
+                {
+                    currentPage = max(0, currentPage - 1);
+                    currentIndex = max(0, currentIndex - pageSize);
+                }
+                else if (arrow == '6') // PageDown
+                {
+                    currentPage = min((int)ceil(fileList.size() / (double)pageSize) - 1, currentPage + 1);
+                    currentIndex = min((int)fileList.size() - 1, currentIndex + pageSize);
+                }
+                else if (arrow == 'H') // Home
+                {
+                    currentPage = 0;
+                    currentIndex = 0;
+                }
+                else if (arrow == 'F') // End
+                {
+                    currentPage = (int)ceil(fileList.size() / (double)pageSize) - 1;
+                    currentIndex = fileList.size() - 1;
                 }
             }
             else if (ch == '\n' || ch == '\r')
@@ -210,15 +250,14 @@ public:
                     }
                 }
             }
-            else if (ch == 's') 
+            else if (ch == 's')
             {
                 terminalMode = true;
             }
 
-            render(); 
+            render();
         }
     }
-
 
     void run(const string& path)//入口
     {
