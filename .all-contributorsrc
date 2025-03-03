@@ -1,0 +1,27 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "XYLCS-Studio",
+      "name": "XYLCS-Studio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/158823035?v=4",
+      "profile": "http://www.xylcsstudio.com",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "cliui",
+  "projectOwner": "LosefDevLab"
+}
