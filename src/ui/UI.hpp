@@ -9,6 +9,7 @@
 #include <cstring>
 #include <algorithm>
 #include <cmath>
+#include <unordered_set>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -26,6 +27,9 @@ private:
     bool terminalMode = false;       // 是否处于终端模式
     int currentPage = 0;             // 当前页码
     int pageSize = 10;               // 每页显示的文件数量
+    unordered_set<string> lastFileSet; // 上一次的文件集，用于检测变化
+    thread fileWatcherThread;         // 文件监视线程
+    bool stopFileWatcher = false;    // 停止文件监视线程的标志
 
     // 截断文件名并添加省略号
     string truncateFileName(const string& name)
@@ -37,32 +41,70 @@ private:
         return name;
     }
 
-public:
-    // 加载当前路径下的文件和文件夹
-    void loadFiles(const string& path)
+    // 检查文件列表是否有变化
+    bool checkFileListChanged()
     {
-        try
+        unordered_set<string> currentFileSet;
+        for (const auto& entry : fs::directory_iterator(currentPath))
         {
-            currentPath = path;
-            fileList.clear();
-            for (const auto& entry : fs::directory_iterator(path))
-            {
-                bool isDir = fs::is_directory(entry.path());
-                fileList.push_back({entry.path().filename().string(), isDir});
-            }
+            currentFileSet.insert(entry.path().filename().string());
         }
-        catch (const exception& e)
-        {
-            errorMessage = "Error: You do not have permission to access this folder.";
-            this->showErrorForSeconds(3);
 
-            string parentPath = fs::path(currentPath).parent_path().string();
-            if (!parentPath.empty())
+        if (currentFileSet != lastFileSet)
+        {
+            lastFileSet = currentFileSet;
+            return true;
+        }
+        return false;
+    }
+
+    // 文件监视线程函数
+    void fileWatcher()
+    {
+        while (!stopFileWatcher)
+        {
+            this_thread::sleep_for(chrono::seconds(1)); // 每秒检查一次
+            if (checkFileListChanged())
             {
-                loadFiles(parentPath);
+                loadFiles(currentPath);
+                render();
             }
         }
     }
+
+public:
+// 加载当前路径下的文件和文件夹
+void loadFiles(const string& path)
+{
+    try
+    {
+        currentPath = path;
+        fileList.clear();
+        lastFileSet.clear();
+
+        for (const auto& entry : fs::directory_iterator(path))
+        {
+            bool isDir = fs::is_directory(entry.path());
+            fileList.push_back({entry.path().filename().string(), isDir});
+            lastFileSet.insert(entry.path().filename().string());
+        }
+
+        // 重置当前页码为第一页
+        currentPage = 0;
+        currentIndex = 0;
+    }
+    catch (const exception& e)
+    {
+        errorMessage = "Error: You do not have permission to access this folder.";
+        this->showErrorForSeconds(3);
+
+        string parentPath = fs::path(currentPath).parent_path().string();
+        if (!parentPath.empty())
+        {
+            loadFiles(parentPath);
+        }
+    }
+}
 
     // 渲染界面
     void render()
@@ -100,6 +142,11 @@ public:
             cout << truncateFileName(fileList[i].first) << endl;
         }
         cout << "----------------------------------------" << endl;
+
+        // 计算总页数
+        int totalPages = (int)ceil(fileList.size() / (double)pageSize);
+        cout << "PAGE[" << currentPage + 1 << "/" << totalPages << "]" << endl;
+
         cout << "  ENTER - Enter folder" << endl;
         cout << "  LEFT  - Go to parent folder" << endl;
         cout << "  UP/DOWN - Navigate" << endl;
@@ -108,7 +155,7 @@ public:
         cout << "  PageUp - Previous page" << endl;
         cout << "  PageDn - Next page" << endl;
         cout << "  Home - First page" << endl;
-        cout << "  End - Last page" << endl;
+        cout << "  End - Last page\nCLI UI 1B2" << endl;
 
         // 显示错误信息（如果有）
         if (!errorMessage.empty())
@@ -142,64 +189,85 @@ public:
         t.detach();
     }
 
-    // 处理键盘输入
-    void handleInput()
+// 处理键盘输入
+void handleInput()
+{
+    while (true)
     {
-        while (true)
+        char ch = getch();
+        if (terminalMode)
         {
-            char ch = getch();
-            if (terminalMode)
-            {
-                cout << "\nTerminal Mode (Input exit to exit):" << endl;
-                chdir(currentPath.c_str());
-                system("$SHELL");
-                terminalMode = false;
-                render();
-                continue;
-            }
+            cout << "\nTerminal Mode (Input exit to exit):" << endl;
+            chdir(currentPath.c_str());
+            system("$SHELL");
+            terminalMode = false;
+            render();
+            continue;
+        }
 
-            if (ch == '\033')
+        if (ch == '\033')
+        {
+            getch();
+            char arrow = getch();
+            if (arrow == 'A') // Up
             {
-                getch();
-                char arrow = getch();
-                if (arrow == 'A')
+                int start = currentPage * pageSize;
+                if (currentIndex > start)
                 {
-                    currentIndex = (currentIndex > 0) ? currentIndex - 1 : fileList.size() - 1;
+                    currentIndex--;
                 }
-                else if (arrow == 'B')
+            }
+            else if (arrow == 'B') // Down
+            {
+                int start = currentPage * pageSize;
+                int end = min(start + pageSize, static_cast<int>(fileList.size()));
+                if (currentIndex < end - 1)
                 {
-                    currentIndex = (currentIndex + 1) % fileList.size();
+                    currentIndex++;
                 }
-                else if (arrow == 'D')
+            }
+            else if (arrow == 'D') // Left
+            {
+                string parentPath = fs::path(currentPath).parent_path().string();
+                if (!parentPath.empty())
                 {
-                    string parentPath = fs::path(currentPath).parent_path().string();
-                    if (!parentPath.empty())
-                    {
-                        loadFiles(parentPath);
-                    }
+                    loadFiles(parentPath);
                 }
-                else if (arrow == '5') // PageUp
+            }
+            else if (arrow == '5') // PageUp
+            {
+                if (!fileList.empty()) // 检查文件列表是否为空
                 {
                     currentPage = max(0, currentPage - 1);
-                    currentIndex = max(0, currentIndex - pageSize);
-                }
-                else if (arrow == '6') // PageDown
-                {
-                    currentPage = min((int)ceil(fileList.size() / (double)pageSize) - 1, currentPage + 1);
-                    currentIndex = min((int)fileList.size() - 1, currentIndex + pageSize);
-                }
-                else if (arrow == 'H') // Home
-                {
-                    currentPage = 0;
-                    currentIndex = 0;
-                }
-                else if (arrow == 'F') // End
-                {
-                    currentPage = (int)ceil(fileList.size() / (double)pageSize) - 1;
-                    currentIndex = fileList.size() - 1;
+                    int start = currentPage * pageSize;
+                    currentIndex = start; // 指示器指向当前页的第一个
                 }
             }
-            else if (ch == '\n' || ch == '\r')
+            else if (arrow == '6') // PageDown
+            {
+                if (!fileList.empty()) // 检查文件列表是否为空
+                {
+                    int totalPages = (int)ceil(fileList.size() / (double)pageSize);
+                    currentPage = min(totalPages - 1, currentPage + 1);
+                    int start = currentPage * pageSize;
+                    currentIndex = start; // 指示器指向当前页的第一个
+                }
+            }
+            else if (arrow == 'H') // Home
+            {
+                currentPage = 0;
+                currentIndex = 0;
+            }
+            else if (arrow == 'F') // End
+            {
+                int totalPages = (int)ceil(fileList.size() / (double)pageSize);
+                currentPage = totalPages - 1;
+                currentIndex = fileList.size() - 1;
+            }
+        }
+        else if (ch == '\n' || ch == '\r')
+        {
+            if (!fileList.empty()) // 检查文件列表是否为空
             {
                 const auto& [name, isDir] = fileList[currentIndex];
                 string selectedPath = currentPath + "/" + name;
@@ -222,7 +290,10 @@ public:
                     }
                 }
             }
-            else if (ch == 'd')
+        }
+        else if (ch == 'd')
+        {
+            if (!fileList.empty()) // 检查文件列表是否为空
             {
                 const auto& [name, isDir] = fileList[currentIndex];
                 string selectedPath = currentPath + "/" + name;
@@ -250,19 +321,26 @@ public:
                     }
                 }
             }
-            else if (ch == 's')
-            {
-                terminalMode = true;
-            }
-
-            render();
         }
+        else if (ch == 's')
+        {
+            terminalMode = true;
+        }
+
+        render();
     }
+}
 
     void run(const string& path)//入口
     {
         loadFiles(path);
+        fileWatcherThread = thread(&UI::fileWatcher, this);
         render();
         handleInput();
+        stopFileWatcher = true;
+        if (fileWatcherThread.joinable())
+        {
+            fileWatcherThread.join();
+        }
     }
 };
