@@ -1,6 +1,6 @@
 //+++ MAIN +++
 #include <iostream>
-#include "UI.cpp"
+#include "UI.hpp"
 
 using namespace std;
 
