@@ -53,25 +53,3 @@ cd build
 感谢所有开发成员和社区的支持，特别感谢：<br>
 阿龙 @Alonglosef<br>
 <br>也希望您能给我们的项目做一些小小的贡献,使这个项目更加壮大，谢谢!
-
-## Contributors ✨
-
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="http://www.xylcsstudio.com"><img src="https://avatars.githubusercontent.com/u/158823035?v=4?s=100" width="100px;" alt="XYLCS-Studio"/><br /><sub><b>XYLCS-Studio</b></sub></a><br /><a href="https://github.com/LosefDevLab/cliui/commits?author=XYLCS-Studio" title="Code">💻</a> <a href="https://github.com/LosefDevLab/cliui/commits?author=XYLCS-Studio" title="Tests">⚠️</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
