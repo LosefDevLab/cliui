@@ -29,6 +29,7 @@ chmod +x build.sh
 # 构建并运行
 cd cliui
 ./build.sh
+cd build
 ./cliui
 ```
 
