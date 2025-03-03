@@ -44,7 +44,6 @@ cd cliui
 ## 联系方式
 - GitHub Issues：[CLIUI GitHub](https://github.com/LosefDevLab/cliui/issues)
 - 微信赞助：xylcsstudio
-- QQ讨论群：待补充
 
 ## 致谢
 感谢所有开发成员和社区的支持，特别感谢：<br>
