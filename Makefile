@@ -5,7 +5,7 @@ LDFLAGS =
 TARGET = cliui
 
 # 源文件目录和构建目录配置
-SRC_DIRS = src/ui src/api
+SRC_DIRS = src/ui src/api src/yours src/yours/UI src/yours/api
 BUILD_DIR = build
 
 # 自动收集源文件并生成目标文件路径
